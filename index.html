@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#FF6B35" />
+  <meta name="description" content="AI-powered cooking to-do list assistant — personalized daily meal plans, grocery lists, budget analysis, and step-by-step cooking checklists." />
+  <title>🍳 Cooking To-Do List Assistant</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍳%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <!-- ========== APP SHELL ========== -->
+  <div id="app">
+
+    <!-- =============== ONBOARDING SCREEN =============== -->
+    <section id="screen-onboarding" class="screen active">
+      <div class="onboarding">
+        <header class="onb-header">
+          <div class="logo">🍳</div>
+          <h1>Cooking To-Do List<br><span class="accent">Assistant</span></h1>
+          <p class="tagline">Your personal AI chef — meals, groceries, budget &amp; checklists in 30 seconds.</p>
+        </header>
+
+        <!-- Step indicator -->
+        <div class="step-dots" id="step-dots">
+          <span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+
+        <!-- ============== STEP 1: People ============== -->
+        <div class="onb-step active" data-step="1">
+          <h2>How many people are eating?</h2>
+          <div class="counter">
+            <button class="counter-btn" data-target="peopleCount" data-delta="-1">−</button>
+            <div class="counter-value" id="peopleCount-val">2</div>
+            <button class="counter-btn" data-target="peopleCount" data-delta="1">+</button>
+          </div>
+          <p class="hint">We'll scale every recipe automatically.</p>
+        </div>
+
+        <!-- ============== STEP 2: Pantry ============== -->
+        <div class="onb-step" data-step="2">
+          <h2>What's already in your kitchen?</h2>
+          <p class="hint">Tap to add. We'll skip these on the grocery list.</p>
+          <div class="chip-input">
+            <input type="text" id="pantry-search" placeholder="Search ingredients (e.g. rice, onion)..." />
+          </div>
+          <div class="chip-grid" id="pantry-chips"></div>
+          <div class="pantry-selected" id="pantry-selected"></div>
+        </div>
+
+        <!-- ============== STEP 3: Diet ============== -->
+        <div class="onb-step" data-step="3">
+          <h2>Dietary preference</h2>
+          <p class="hint">Choose one or more.</p>
+          <div class="big-chips" id="diet-chips"></div>
+        </div>
+
+        <!-- ============== STEP 4: Allergies ============== -->
+        <div class="onb-step" data-step="4">
+          <h2>Any allergies or restrictions?</h2>
+          <p class="hint">We'll filter out these from every recipe.</p>
+          <div class="big-chips" id="allergy-chips"></div>
+        </div>
+
+        <!-- ============== STEP 5: Budget & Skill & Time ============== -->
+        <div class="onb-step" data-step="5">
+          <h2>Daily food budget</h2>
+          <div class="slider-wrap">
+            <input type="range" id="budget" min="5" max="100" step="1" value="25" />
+            <div class="slider-value">$<span id="budget-val">25</span></div>
+          </div>
+
+          <h2 class="mt-24">Cooking skill</h2>
+          <div class="card-row" id="skill-cards"></div>
+
+          <h2 class="mt-24">Available cooking time</h2>
+          <div class="slider-wrap">
+            <input type="range" id="time" min="10" max="120" step="5" value="45" />
+            <div class="slider-value"><span id="time-val">45</span> min</div>
+          </div>
+        </div>
+
+        <!-- ============== STEP 6: Cuisine ============== -->
+        <div class="onb-step" data-step="6">
+          <h2>Preferred cuisines</h2>
+          <p class="hint">Pick what you love. We'll prioritize them.</p>
+          <div class="big-chips" id="cuisine-chips"></div>
+        </div>
+
+        <!-- ============== STEP 7: Calorie target ============== -->
+        <div class="onb-step" data-step="7">
+          <h2>Daily calorie target</h2>
+          <p class="hint">Optional. We'll balance your macros.</p>
+          <div class="slider-wrap">
+            <input type="range" id="calories" min="1200" max="3500" step="100" value="2000" />
+            <div class="slider-value"><span id="calories-val">2000</span> kcal</div>
+          </div>
+          <p class="hint mt-16">Tip: 2000 kcal is the standard adult maintenance.</p>
+        </div>
+
+        <!-- ============== NAV BUTTONS ============== -->
+        <div class="onb-nav">
+          <button class="btn btn-ghost" id="onb-back" disabled>← Back</button>
+          <button class="btn btn-primary" id="onb-next">Next →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============== LOADING SCREEN =============== -->
+    <section id="screen-loading" class="screen">
+      <div class="loading-wrap">
+        <div class="spinner">🍳</div>
+        <h2 id="loading-title">Crafting your meal plan...</h2>
+        <p id="loading-sub">Analyzing 30+ recipes against your preferences</p>
+        <div class="loading-progress"><div class="loading-bar" id="loading-bar"></div></div>
+      </div>
+    </section>
+
+    <!-- =============== DASHBOARD SCREEN =============== -->
+    <section id="screen-dashboard" class="screen">
+      <header class="app-header">
+        <button class="icon-btn" id="btn-menu" title="Menu">☰</button>
+        <div class="header-title">
+          <div class="header-date" id="hdr-date">Today</div>
+          <div class="header-sub">Your AI meal plan</div>
+        </div>
+        <button class="icon-btn" id="btn-regenerate" title="Regenerate">🔄</button>
+      </header>
+
+      <main class="app-main">
+        <!-- Daily summary card -->
+        <div class="summary-card">
+          <div class="summary-stat">
+            <div class="stat-circle" id="kcal-circle">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" class="stat-bg" />
+                <circle cx="50" cy="50" r="42" class="stat-fg" id="kcal-ring" />
+              </svg>
+              <div class="stat-center">
+                <div class="stat-num" id="kcal-num">0</div>
+                <div class="stat-lbl">kcal</div>
+              </div>
+            </div>
+            <div class="stat-text">
+              <div class="stat-text-row"><span>💰 Spent</span><strong id="cost-num">$0</strong></div>
+              <div class="stat-text-row"><span>🎯 Budget</span><strong id="budget-display">$0</strong></div>
+              <div class="stat-text-row"><span>⏱ Cook time</span><strong id="time-display">0 min</strong></div>
+              <div class="stat-text-row"><span>👥 Serves</span><strong id="serves-display">0</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget banner -->
+        <div id="budget-banner" class="banner"></div>
+
+        <!-- Meal cards -->
+        <div class="section-title">🌅 Breakfast</div>
+        <div class="meal-card" id="card-breakfast"></div>
+
+        <div class="section-title">☀️ Lunch</div>
+        <div class="meal-card" id="card-lunch"></div>
+
+        <div class="section-title">🌙 Dinner</div>
+        <div class="meal-card" id="card-dinner"></div>
+
+        <div class="section-title">🍎 Snacks</div>
+        <div class="snack-row" id="card-snacks"></div>
+
+        <!-- Quick actions -->
+        <div class="quick-actions">
+          <button class="qa-btn" id="qa-grocery">🛒 Grocery List</button>
+          <button class="qa-btn" id="qa-budget">💰 Budget</button>
+          <button class="qa-btn" id="qa-subs">🔄 Substitutions</button>
+        </div>
+      </main>
+
+      <nav class="bottom-nav">
+        <button class="bnav active" data-tab="home">🏠<br><span>Home</span></button>
+        <button class="bnav" data-tab="grocery">🛒<br><span>Grocery</span></button>
+        <button class="bnav" data-tab="budget">💰<br><span>Budget</span></button>
+        <button class="bnav" data-tab="tasks">✅<br><span>Cook</span></button>
+      </nav>
+    </section>
+
+    <!-- =============== GROCERY SCREEN =============== -->
+    <section id="screen-grocery" class="screen">
+      <header class="app-header">
+        <button class="icon-btn" data-back>←</button>
+        <div class="header-title"><div class="header-date">Grocery List</div><div class="header-sub" id="grocery-total">$0</div></div>
+        <button class="icon-btn" id="grocery-share" title="Share">📤</button>
+      </header>
+      <main class="app-main">
+        <div id="grocery-cats"></div>
+        <button class="btn btn-ghost btn-block" id="grocery-clear">Clear all checks</button>
+      </main>
+      <nav class="bottom-nav">
+        <button class="bnav" data-tab="home">🏠<br><span>Home</span></button>
+        <button class="bnav active" data-tab="grocery">🛒<br><span>Grocery</span></button>
+        <button class="bnav" data-tab="budget">💰<br><span>Budget</span></button>
+        <button class="bnav" data-tab="tasks">✅<br><span>Cook</span></button>
+      </nav>
+    </section>
+
+    <!-- =============== BUDGET SCREEN =============== -->
+    <section id="screen-budget" class="screen">
+      <header class="app-header">
+        <button class="icon-btn" data-back>←</button>
+        <div class="header-title"><div class="header-date">Budget Analysis</div><div class="header-sub">Smart money tips</div></div>
+        <button class="icon-btn" id="budget-edit" title="Edit budget">✏️</button>
+      </header>
+      <main class="app-main">
+        <div class="summary-card">
+          <div class="budget-meter">
+            <div class="meter-bar"><div class="meter-fill" id="meter-fill"></div></div>
+            <div class="meter-labels">
+              <span id="meter-spent">$0 spent</span>
+              <span id="meter-budget">$0 budget</span>
+            </div>
+          </div>
+        </div>
+        <div id="budget-msg" class="banner"></div>
+        <h2 class="section-title">💡 Savings suggestions</h2>
+        <div id="budget-suggestions"></div>
+        <h2 class="section-title">📊 Cost breakdown</h2>
+        <div id="budget-breakdown"></div>
+      </main>
+      <nav class="bottom-nav">
+        <button class="bnav" data-tab="home">🏠<br><span>Home</span></button>
+        <button class="bnav" data-tab="grocery">🛒<br><span>Grocery</span></button>
+        <button class="bnav active" data-tab="budget">💰<br><span>Budget</span></button>
+        <button class="bnav" data-tab="tasks">✅<br><span>Cook</span></button>
+      </nav>
+    </section>
+
+    <!-- =============== COOK TASKS SCREEN =============== -->
+    <section id="screen-tasks" class="screen">
+      <header class="app-header">
+        <button class="icon-btn" data-back>←</button>
+        <div class="header-title"><div class="header-date">Cooking Tasks</div><div class="header-sub" id="tasks-progress">0 / 0 done</div></div>
+        <button class="icon-btn" id="tasks-reset" title="Reset">↺</button>
+      </header>
+      <main class="app-main">
+        <div class="task-tabs" id="task-tabs">
+          <button class="ttab active" data-slot="breakfast">🌅 Breakfast</button>
+          <button class="ttab" data-slot="lunch">☀️ Lunch</button>
+          <button class="ttab" data-slot="dinner">🌙 Dinner</button>
+        </div>
+        <div id="task-list"></div>
+      </main>
+      <nav class="bottom-nav">
+        <button class="bnav" data-tab="home">🏠<br><span>Home</span></button>
+        <button class="bnav" data-tab="grocery">🛒<br><span>Grocery</span></button>
+        <button class="bnav" data-tab="budget">💰<br><span>Budget</span></button>
+        <button class="bnav active" data-tab="tasks">✅<br><span>Cook</span></button>
+      </nav>
+    </section>
+
+    <!-- =============== MEAL DETAIL MODAL =============== -->
+    <div class="modal-backdrop" id="meal-modal">
+      <div class="modal" id="meal-modal-content"></div>
+    </div>
+
+    <!-- =============== TOAST =============== -->
+    <div class="toast" id="toast"></div>
+
+  </div>
+
+  <script src="assets/js/data.js"></script>
+  <script src="assets/js/engine.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
